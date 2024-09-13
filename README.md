@@ -52,7 +52,7 @@ BibTeX Reference:
 
 ### 1. Clone (or Fork!) this repository
 ```
-git clone git@github.com:synergylabs/Kirigami-private-audio.git
+git clone https://github.com/synergylabs/kirigami.git
 ```
 
 ### 2. Create a virtual environment and install python packages
@@ -86,7 +86,7 @@ You can follow the steps inside experiments to train basic Logistic Regression m
 - experiments/background_detector.ipynb
 
 ## Updates:
-- 2024-09-11: Initial release of Kirigami live visualization and filter training scripts.
+- 2024-09-13: Initial release of Kirigami live visualization and filter training scripts.
 
 ## Contact:
 For more information please contact sudershan@cmu.edu or haozhezh@andrew.cmu.edu

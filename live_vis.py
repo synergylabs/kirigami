@@ -1,16 +1,11 @@
-import json
-import pyaudio
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-import scipy
 from scipy.signal import spectrogram, stft
 from scipy.io import wavfile
 import matplotlib.animation as animation
 import torch
 
-from cmsisdsp import arm_rfft_instance_q15, arm_rfft_init_q15, arm_rfft_q15, arm_cmplx_mag_q15
-from cmsisdsp import arm_float_to_q15
 
 from kirigami_filters import background_subtraction_utils as bgutils
 
@@ -18,10 +13,6 @@ from init_config import *
 from kirigami_filters.filters import background_detection_filter, kirigami_filter, kirigami_filter_reverse_fft
 
 # Function to load configuration from config.json
-
-
-def _get_edge_fft_config():
-    return enable_edge_fft
 
 def list_microphones():
     p = pyaudio.PyAudio()
@@ -84,55 +75,6 @@ for k in range(len(indices)):
         mic_desc = mics[k]
 print("Using mic: %s" % mic_desc)
 
-def calculate_q15_spectrogram(audio_samples, rfft_instance_q15, window_size=256, step_size=128):
-
-    # Convert the audio to q15
-    audio_samples_q15 = arm_float_to_q15(audio_samples)
-
-    # Convert the q15 to 4096 range
-    audio_samples_q15 = np.interp(audio_samples_q15, (audio_samples_q15.min(), audio_samples_q15.max()),
-                                  (0, 4096)).astype(np.int32)
-
-    # audio_samples_q15 = np.interp(audio_samples_q15, (audio_samples_q15.min(), audio_samples_q15.max()),
-    #                               (-2048, 2048)).astype(np.int32)
-
-    # Calculate the number of windows
-    number_of_windows = int(1 + (len(audio_samples) - window_size) // step_size)
-
-    # Calculate the FFT Output size
-    num_fft_bins = int(window_size // 2 + 1)
-
-    # Create an empty array to hold the Spectrogram
-    spectrogram_q15 = np.empty((number_of_windows, num_fft_bins))
-
-    start_index = 0
-    # Apply hanning window and apply fft
-    for index in range(number_of_windows):
-        # Take the window from the waveform.
-        audio_window_q15 = audio_samples_q15[start_index:start_index + window_size]
-
-        # Calculate the FFT
-        rfft_q15 = arm_rfft_q15(rfft_instance_q15, audio_window_q15)
-
-
-        # Take the absolute value of the FFT and add to the Spectrogram.
-        rfft_mag_q15 = arm_cmplx_mag_q15(rfft_q15)[:num_fft_bins]
-
-        spectrogram_q15[index] = rfft_mag_q15
-
-        # Increase the start index of the window by the overlap amount.
-        start_index += step_size
-
-    return spectrogram_q15
-
-
-def cmsis_feature(wavs):
-    rfft_instance_q15 = arm_rfft_instance_q15()
-    status = arm_rfft_init_q15(rfft_instance_q15, 256, 0, 1)
-    stft = calculate_q15_spectrogram(wavs.astype(np.float32), rfft_instance_q15, 256, 128)
-    return stft
-
-
 def prepare_plot(interpolation="nearest", vmax=20, vmin=0, config="Kirigami Demo"):
     fig, ax = plt.subplots(5, figsize=(20, 10))
 
@@ -174,26 +116,15 @@ def prepare_plot(interpolation="nearest", vmax=20, vmin=0, config="Kirigami Demo
     # im = axis2.imshow(np.zeros((NFFT // 2 + 1, 100)), aspect='auto', cmap='inferno',
     #                extent=[0, 1, 0, RATE / 2], origin='lower')
 
-    if enable_edge_fft:
-        img = ax[1].matshow(
-            np.transpose(np.zeros((NFFT // 2 + 1, 129))),
-            interpolation=interpolation,
-            aspect="auto",
-            cmap=plt.cm.BrBG,
-            origin="lower",
-            vmax=vmax,
-            vmin=vmin
-        )
-    else:
-        img = ax[1].matshow(
-            np.transpose(np.zeros((NFFT // 2 + 1, 129))),
-            interpolation=interpolation,
-            aspect="auto",
-            cmap=plt.cm.BrBG,
-            origin="lower",
-            vmax=20,
-            vmin=0
-        )
+    img = ax[1].matshow(
+        np.transpose(np.zeros((NFFT // 2 + 1, 129))),
+        interpolation=interpolation,
+        aspect="auto",
+        cmap=plt.cm.BrBG,
+        origin="lower",
+        vmax=20,
+        vmin=0
+    )
 
     LR_background_detection_img = ax[2].matshow(
         np.transpose(np.zeros((NFFT // 2 + 1, 129))),
@@ -260,29 +191,8 @@ def update(n):
     # # 1 / AMPLITUDE * CHUNK == 2 / (AMPLITUDE * 2) * CHUNK
     # line_fft.set_ydata(np.abs(y_fft[0:(CHUNK)]) * 1/(AMPLITUDE * CHUNK))
     global noise_stft_db, mean_freq_noise, std_freq_noise, noise_thresh
-    if enable_edge_fft:
-        S_edge_FFT = cmsis_feature(data)
-        S = S_edge_FFT.transpose()
 
-        background_stft_mask_data = img.get_array()
-        if n < CALIBRATION_SAMPLES_FRAME:
-            background_stft_mask_data = np.hstack((background_stft_mask_data, S))
-
-        if n == CALIBRATION_SAMPLES_FRAME:
-            background_stft_mask_data = background_stft_mask_data[:, 130:]
-            noise_stft_db, mean_freq_noise, std_freq_noise, noise_thresh = bgutils.recalibrate_mask_data(
-                background_stft_mask_data)
-
-        # Background LR filters:
-        S_LR_background_detection_filter = background_detection_filter(S.transpose()).transpose()
-
-        # S_background_Mask = apply_mask_spectogram(S, S_complex)
-        S_background_Mask_filter = bgutils.apply_mask_spectogram(S, S, noise_thresh, mean_freq_noise, smoothing_filter)
-
-        # Phoneme LR filter STFT:
-        S_phoneme_LR_filter = kirigami_filter(S.transpose()).transpose()
-
-    elif CONFIG == "Kirigami_background_mask":
+    if CONFIG == "Kirigami_background_mask":
         S, S_complex = get_spectrogram(data)
 
         background_stft_mask_data = img.get_array()
@@ -300,7 +210,7 @@ def update(n):
         S_LR_background_detection_filter = background_detection_filter(S.transpose()).transpose()
 
         # Background Masking STFT:
-        S_background_Mask_filter = bgutils.apply_mask_spectogram(S, S_complex, noise_thresh, mean_freq_noise, smoothing_filter)
+        S_background_Mask_filter = bgutils.apply_mask_spectrogram(S, S_complex, noise_thresh, mean_freq_noise, smoothing_filter)
 
         # Phoneme LR filter STFT:
         S_phoneme_LR_filter = kirigami_filter_reverse_fft(S_background_Mask_filter.transpose(),
@@ -313,7 +223,7 @@ def update(n):
         S_LR_background_detection_filter = background_detection_filter(S.transpose()).transpose()
 
         # Background Masking STFT:
-        S_background_Mask_filter = bgutils.apply_mask_spectogram(S, S_complex, noise_thresh, mean_freq_noise, smoothing_filter)
+        S_background_Mask_filter = bgutils.apply_mask_spectrogram(S, S_complex, noise_thresh, mean_freq_noise, smoothing_filter)
 
         # Phoneme LR filter STFT:
         S_phoneme_LR_filter = kirigami_filter(S_background_Mask_filter.transpose()).transpose()

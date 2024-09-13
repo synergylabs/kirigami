@@ -38,7 +38,7 @@ def compute_mask(prev_profile, new_bg_noise):
     return noise_stft_db, mean_freq_noise, std_freq_noise, noise_thresh
 
 
-def apply_mask_spectogram(audio_stft, audio_stft_complex, noise_thresh, mean_freq_noise, smoothing_filter):
+def apply_mask_spectrogram(audio_stft, audio_stft_complex, noise_thresh, mean_freq_noise, smoothing_filter):
     #noise_stft_db, mean_freq_noise, std_freq_noise, noise_thresh = compute_mask(audio_stft, noise_fft_data)
     sig_stft_db = _amp_to_db(audio_stft)
     mask_gain_dB = np.min(_amp_to_db(audio_stft))
@@ -65,12 +65,3 @@ def apply_mask_spectogram(audio_stft, audio_stft_complex, noise_thresh, mean_fre
             + np.ones(np.shape(mask_gain_dB)) * mask_gain_dB * sig_mask
     )
     return _db_to_amp(sig_stft_db_masked)
-
-
-
-# # TODO: Implement the background mask LR here:
-# def kirigami_filter_with_bm(s_full, threshold=0.5, noise_data=None):
-#     masked_audio_stft = apply_background_mask(s_full.transpose(), noise_data=None).transpose()
-#     pred = (lr_phoneme_filter_model.forward(torch.Tensor(s_full)) >= threshold).long().numpy()
-#     masked = (1 - pred) * s_full
-#     return masked
