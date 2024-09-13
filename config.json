@@ -1,0 +1,39 @@
+{
+  "audio_config": {
+    "format": "paInt16",
+    "channels": 1,
+    "rate": 16000,
+    "chunk": 1024
+  },
+  "audio_fft_config": {
+    "nfft": 256,
+    "hop_length": 128,
+    "amplitude": 32768
+  },
+  "background_mask_config": {
+    "config_type": "Kirigami_background_mask",
+    "heuristic_sampling_config": {
+      "calibration_samples_frame": 10,
+      "samples_per_frame": 100,
+      "sample_count": 130
+    },
+    "mask_filter_config":{
+      "n_grad_freq": 2,
+      "n_grad_time": 4,
+      "n_std_thresh": 1.2,
+      "prop_decrease": 1.0
+    },
+      "bg_noise_clip": "kirigami_filters/sample_audio/background.wav"
+  },
+  "kirigami_filter_config": {
+    "lr_threshold": 0.4,
+    "lr_phoneme_checkpoint_path": "kirigami_filters/model_checkpoints/phoneme_filter.ckpt",
+    "edge_lr_phoneme_checkpoint_path": "kirigami_filters/model_checkpoints/cmsis_phoneme_filter_4096_128.ckpt"
+  },
+  "background_detection_lr_filter_config": {
+        "background_lr_threshold": 0.34,
+    "bg_lr_checkpoint_path": "kirigami_filters/model_checkpoints/noisy_background_scipy_detector_2048_128_s.ckpt",
+    "edge_bg_lr_checkpoint_path": "kirigami_filters/model_checkpoints/noisy_background_cmsis_detector_2048_128.ckpt"
+  },
+  "enable_edge_fft": false
+}
