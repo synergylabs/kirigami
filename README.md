@@ -55,11 +55,28 @@ BibTeX Reference:
 git clone https://github.com/synergylabs/kirigami.git
 ```
 
-### 2. Create a virtual environment and install python packages
-We recommend using VirtualEnv. Tested on `Ubuntu 22.04`, with `python 3.10`.
+### 2. Install portaudio
+Use Homebrew to install the prerequisite portaudio (https://files.portaudio.com/download.html) library, then install python packages:
+```
+brew install portaudio
+```
+
+### 3. Create a virtual environment
+We recommend using Conda (https://docs.anaconda.com/miniconda/#miniconda-latest-installer-links). Tested on `Ubuntu 22.04`, with `python 3.10`.
+```
+conda create --name kirigami_env pip
+conda activate kirigami_env
+```
+
+### 4. Install python packages
 
 ```bash
 python -m pip install -r requirements.txt
+```
+**Caution: ** If you run issues on mac with pyaudio installation, follow the below steps:
+```bash
+pip uninstall pyaudio
+python3 -m pip install pyaudio --global-option="build_ext" --global-option="-I/opt/homebrew/include" --global-option="-L/opt/homebrew/lib"
 ```
 
 ## Usage:
