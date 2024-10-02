@@ -73,7 +73,7 @@ conda activate kirigami_env
 ```bash
 python -m pip install -r requirements.txt
 ```
-**Caution: ** If you run issues on mac with pyaudio installation, follow the below steps:
+**Caution:** If you run issues on mac with pyaudio installation, follow the below steps:
 ```bash
 pip uninstall pyaudio
 python3 -m pip install pyaudio --global-option="build_ext" --global-option="-I/opt/homebrew/include" --global-option="-L/opt/homebrew/lib"
