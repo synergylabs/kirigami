@@ -57,8 +57,15 @@ git clone https://github.com/synergylabs/kirigami.git
 
 ### 2. Install portaudio
 Use Homebrew to install the prerequisite portaudio (https://files.portaudio.com/download.html) library, then install python packages:
+
+#### MAC
 ```
 brew install portaudio
+```
+#### GNU/Linux
+Use the package manager to install PyAudio. For example, on Debian-based systems:
+```
+sudo apt install python3-pyaudio
 ```
 
 ### 3. Create a virtual environment
